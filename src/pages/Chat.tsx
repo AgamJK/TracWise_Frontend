@@ -75,7 +75,7 @@ export default function Chat() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/qa/", {
+      const response = await fetch("https://tracwise-backend.onrender.com/api/qa/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: userMessage.text, model: "General" }),
