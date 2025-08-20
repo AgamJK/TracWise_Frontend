@@ -123,7 +123,7 @@ export default function Chat() {
           timestamp: msg.timestamp
         }));
 
-      const response = await fetch("http://localhost:5000/api/qa/", {
+      const response = await fetch("https://tracwise-backend.onrender.com/api/qa/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
