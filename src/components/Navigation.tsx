@@ -1,8 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
+import { useUser, UserButton } from "@clerk/clerk-react";
 
 const Navigation = () => {
   const location = useLocation();
+  const { isSignedIn, isLoaded } = useUser();
 
   return (
     <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
@@ -26,6 +28,34 @@ const Navigation = () => {
           >
             How It Works
           </a>
+          
+          {isLoaded && (
+            <>
+              {isSignedIn ? (
+                <div className="flex items-center space-x-4">
+                  <Link to="/chat">
+                    <Button variant="outline" size="sm">
+                      Chat
+                    </Button>
+                  </Link>
+                  <UserButton afterSignOutUrl="/" />
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <Link to="/sign-in">
+                    <Button variant="outline" size="sm">
+                      Sign In
+                    </Button>
+                  </Link>
+                  <Link to="/sign-up">
+                    <Button variant="default" size="sm">
+                      Sign Up
+                    </Button>
+                  </Link>
+                </div>
+              )}
+            </>
+          )}
         </div>
 
         {/* Mobile menu button */}
