@@ -1,12 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
-import { Mic, MicOff, Volume2, VolumeX } from "lucide-react";
+import { Mic, MicOff, Volume2, VolumeX, RotateCcw } from "lucide-react";
 import { useSpeechRecognition } from "../hooks/useSpeechRecognition";
 import { useTextToSpeech } from "../hooks/useTextToSpeech";
+import { useUser, UserButton } from "@clerk/clerk-react";
 
 interface Message {
   id: string;
@@ -16,16 +17,44 @@ interface Message {
 }
 
 export default function Chat() {
+  const { user } = useUser();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
-      text: "Hello! I'm TracWise, your AI assistant for tractor operations. Ask me anything about maintenance, troubleshooting, or operation procedures.",
+      text: `Hello${user ? ` ${user.firstName}` : ''}! I'm TracWise, your AI assistant for tractor operations. Ask me anything about maintenance, troubleshooting, or operation procedures.`,
       sender: "ai",
       timestamp: new Date(),
     },
   ]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Load conversation history from localStorage on component mount
+  useEffect(() => {
+    const savedMessages = localStorage.getItem('tracwise-chat-history');
+    if (savedMessages) {
+      try {
+        const parsedMessages = JSON.parse(savedMessages);
+        // Validate the structure and add welcome message if none exists
+        if (Array.isArray(parsedMessages) && parsedMessages.length > 0) {
+          setMessages(parsedMessages.map(msg => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp)
+          })));
+        }
+      } catch (error) {
+        console.error('Error loading chat history:', error);
+        // Keep default welcome message
+      }
+    }
+  }, [user]);
+
+  // Save conversation history to localStorage whenever messages change
+  useEffect(() => {
+    if (messages.length > 1) { // Don't save just the welcome message
+      localStorage.setItem('tracwise-chat-history', JSON.stringify(messages));
+    }
+  }, [messages]);
   const {
     transcript,
     isListening,
@@ -43,6 +72,16 @@ export default function Chat() {
   } = useTextToSpeech();
 
   const [currentSpeakingId, setCurrentSpeakingId] = useState<string | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto scroll to bottom when new messages arrive
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   // Update input value when transcript changes
   useEffect(() => {
@@ -75,10 +114,23 @@ export default function Chat() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("https://tracwise-backend.onrender.com/api/qa/", {
+      // Prepare conversation history for the API (excluding welcome message and current message)
+      const conversationHistory = messages
+        .filter(msg => msg.id !== "1") // Exclude welcome message
+        .map(msg => ({
+          text: msg.text,
+          sender: msg.sender,
+          timestamp: msg.timestamp
+        }));
+
+      const response = await fetch("http://localhost:5000/api/qa/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: userMessage.text, model: "General" }),
+        body: JSON.stringify({ 
+          question: userMessage.text, 
+          model: "General",
+          conversation_history: conversationHistory
+        }),
       });
       const data = await response.json();
       const aiMessage: Message = {
@@ -128,6 +180,17 @@ export default function Chat() {
     }
   }, [isSpeaking]);
 
+  const clearChatHistory = () => {
+    const welcomeMessage = {
+      id: "1",
+      text: `Hello${user ? ` ${user.firstName}` : ''}! I'm TracWise, your AI assistant for tractor operations. Ask me anything about maintenance, troubleshooting, or operation procedures.`,
+      sender: "ai" as const,
+      timestamp: new Date(),
+    };
+    setMessages([welcomeMessage]);
+    localStorage.removeItem('tracwise-chat-history');
+  };
+
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-green-50 to-blue-50">
       {/* Chat Header */}
@@ -159,12 +222,32 @@ export default function Chat() {
               </h1>
               <p className="text-sm text-muted-foreground">
                 Ask questions about tractor operations and maintenance
+                {messages.length > 1 && (
+                  <span className="text-green-600 ml-2">
+                    • Context maintained ({messages.length - 1} message{messages.length !== 2 ? 's' : ''})
+                  </span>
+                )}
               </p>
             </div>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
             <span className="text-sm text-muted-foreground">AI Online</span>
+            {messages.length > 1 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={clearChatHistory}
+                className="ml-4 text-gray-600 hover:text-gray-800"
+                title="Clear chat history"
+              >
+                <RotateCcw size={16} className="mr-1" />
+                Clear Chat
+              </Button>
+            )}
+            <div className="ml-4">
+              <UserButton afterSignOutUrl="/" />
+            </div>
           </div>
         </div>
       </div>
@@ -247,6 +330,7 @@ export default function Chat() {
               </div>
             </div>
           )}
+          <div ref={messagesEndRef} />
         </div>
       </ScrollArea>
 
