@@ -36,7 +36,7 @@ This is the backend for the TracWise project, providing AI-powered Q&A and chat 
 ### Running the Server
 
 ```
-python main.py
+python app.py
 ```
 
 The backend will start on `http://localhost:8000` by default.
