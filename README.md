@@ -1,72 +1,69 @@
-# TracWise Backend
+# TracWise Frontend
 
-This is the backend for the TracWise project, providing AI-powered Q&A and chat context for tractor maintenance and troubleshooting.
+This is the frontend for the TracWise project, providing a user-friendly interface for tractor maintenance Q&A powered by AI.
 
 ## Features
 
-- AI-powered question answering for tractor-related queries
-- Maintains chat context for each session
-- REST API for frontend integration
-- Gemini AI integration
-- Session-based conversation history
+- Modern chat interface for tractor-related queries
+- Session-based conversation context
+- User authentication (Clerk integration)
+- Responsive design
+- Connects to TracWise backend API
 
 ## Getting Started
 
 ### Prerequisites
 
-- Python 3.8+
-- pip
+- Node.js (v16+ recommended)
+- npm or yarn
 
 ### Installation
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/TracWise_Backend.git
-   cd TracWise_Backend
+   git clone https://github.com/yourusername/TracWise_Frontend.git
+   cd TracWise_Frontend
    ```
 
 2. Install dependencies:
    ```
-   pip install -r requirements.txt
+   npm install
+   ```
+   or
+   ```
+   yarn install
    ```
 
 3. Set up environment variables:
-   - Create a `.env` file with your API keys and configuration.
+   - Create a `.env` file in the root directory.
+   - Add your Clerk publishable key and backend API URL:
+     ```
+     VITE_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+     VITE_BACKEND_URL=https://tracwise-backend.onrender.com
+     ```
 
-### Running the Server
+### Running the App
 
 ```
-python app.py
+npm run dev
+```
+or
+```
+yarn dev
 ```
 
-The backend will start on `http://localhost:8000` by default.
-
-## API Endpoints
-
-- `POST /api/qa/`  
-  Ask a question. Supports conversation history for context.
-
-  **Request Example:**
-  ```json
-  {
-    "question": "How do I change engine oil?",
-    "conversation_history": [
-      {"role": "user", "content": "What is engine oil change procedure?"},
-      {"role": "assistant", "content": "Here are the steps..."}
-    ]
-  }
-  ```
-
-  **Response Example:**
-  ```json
-  {
-    "answer": "You should change engine oil every 250 hours. Required tools are..."
-  }
-  ```
+The app will start on `http://localhost:3000` by default.
 
 ## Deployment
 
-You can deploy this backend on Render, Vercel, or any cloud platform that supports Python web servers.
+You can deploy this frontend on Vercel, Netlify, or any static hosting service.  
+For Vercel, ensure you have a `vercel.json` file for proper client-side routing.
+
+## Usage
+
+- Sign in using Clerk authentication.
+- Ask tractor-related questions in the chat.
+- The AI will respond and maintain context throughout your session.
 
 ## License
 
